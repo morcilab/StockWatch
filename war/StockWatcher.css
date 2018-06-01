@@ -1,0 +1,49 @@
+/** Add css rules here for your application. */
+body {
+    padding: 10px;
+}
+
+.watchListHeader {
+    background-color: #2062BB;
+    color: white;
+    font-style: italic;
+}
+
+.watchList {
+    border: 1px solid silver;
+    padding: 2px;
+    margin-bottom: 6px;
+}
+
+.watchListNumericColumn {
+    text-align: right;
+    width: 8em;
+}
+
+.watchListRemoveColumn {
+  text-align: center;
+}
+
+.addPanel {
+  margin: 10px 0px 15px 0px;
+}
+
+.gwt-Button-remove {
+  width: 50px;
+}
+
+.noChange {
+  color: black;
+}
+
+.positiveChange {
+  color: green;
+}
+
+.negativeChange {
+  color: red;
+}
+
+.errorMessage {
+  color: red;
+}
