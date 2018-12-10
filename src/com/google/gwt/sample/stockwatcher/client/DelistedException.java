@@ -3,8 +3,9 @@ package com.google.gwt.sample.stockwatcher.client;
 import java.io.Serializable;
 
 public class DelistedException extends Exception implements Serializable {
+	private static final long serialVersionUID = 9217289749063979133L;
 
-    private String symbol;
+	private String symbol;
 
     public DelistedException() {
     }

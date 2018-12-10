@@ -12,8 +12,6 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.user.client.Random;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -25,6 +23,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
@@ -41,8 +40,11 @@ public class StockWatcher implements EntryPoint {
     private VerticalPanel mainPanel = new VerticalPanel();
     private FlexTable stocksFlexTable = new FlexTable();
     private HorizontalPanel addPanel = new HorizontalPanel();
+	private HorizontalPanel persistPanel = new HorizontalPanel();
     private TextBox newSymbolTextBox = new TextBox();
     private Button addStockButton = new Button("Add");
+	private Button loadSymbolsButton = new Button("Load");
+	private Button saveSymbolsButton = new Button("Save");
     private Label lastUpdatedLabel = new Label();
     private List<String> stocks = new ArrayList<>();
     private StockPriceServiceAsync stockPriceSvc = GWT.create(StockPriceService.class);
@@ -71,13 +73,18 @@ public class StockWatcher implements EntryPoint {
         addPanel.add(addStockButton);
         addPanel.addStyleName("addPanel");
 
-        // Assemble Main panel.
+		// Assemble Persistence panel
+		persistPanel.add(saveSymbolsButton);
+		persistPanel.add(loadSymbolsButton);
+
+		// Assemble Main panel.
         errorMsgLabel.setStyleName("errorMessage");
         errorMsgLabel.setVisible(false);
 
         mainPanel.add(errorMsgLabel);
         mainPanel.add(stocksFlexTable);
         mainPanel.add(addPanel);
+		mainPanel.add(persistPanel);
         mainPanel.add(lastUpdatedLabel);
 
         // Associate the Main panel with the HTML host page.
@@ -96,21 +103,62 @@ public class StockWatcher implements EntryPoint {
 
         addStockButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                addStock();
+            	String symbol = newSymbolTextBox.getText().toUpperCase().trim();
+                addStock(symbol);
             }
         });
 
         newSymbolTextBox.addKeyDownHandler(new KeyDownHandler() {
             public void onKeyDown(KeyDownEvent event) {
                 if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                    addStock();
+                	String symbol = newSymbolTextBox.getText().toUpperCase().trim();
+                    addStock(symbol);
                 }
             }
         });
+        
+		loadSymbolsButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				stockPriceSvc.loadSymbols(new AsyncCallback<String[]>() {
+					@Override
+					public void onFailure(Throwable caught) {
+						Window.alert("Cannot load symbols: "
+								+ caught.getMessage());
+					}
+
+					@Override
+					public void onSuccess(String[] symbols) {
+						for (String symbol : symbols) {
+							addStock(symbol);
+						}
+					}
+				});
+			}
+		});
+
+		saveSymbolsButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				stockPriceSvc.saveSymbols(stocks.toArray(new String[0]),
+						new AsyncCallback<Void>() {
+							@Override
+							public void onFailure(Throwable caught) {
+								Window.alert("Cannot load symbols: "
+										+ caught.getMessage());
+							}
+
+							@Override
+							public void onSuccess(Void result) {
+								Window.alert("Symbols saved");
+							}
+						});
+			}
+		});
+
     }
 
-    private void addStock() {
-        final String symbol = newSymbolTextBox.getText().toUpperCase().trim();
+    private void addStock(final String symbol) {
         newSymbolTextBox.setFocus(true);
 
         if (!symbol.matches("^[0-9A-Z\\.]{1,10}$")) {
