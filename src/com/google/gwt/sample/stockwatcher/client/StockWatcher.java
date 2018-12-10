@@ -2,15 +2,8 @@ package com.google.gwt.sample.stockwatcher.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsonUtils;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -29,7 +22,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -49,7 +41,6 @@ public class StockWatcher implements EntryPoint {
     private List<String> stocks = new ArrayList<>();
     private StockPriceServiceAsync stockPriceSvc = GWT.create(StockPriceService.class);
     private Label errorMsgLabel = new Label();
-    private static final String JSON_URL = GWT.getModuleBaseURL() + "stockPrices?q=";
 
     /**
      * Entry point method.
@@ -194,61 +185,32 @@ public class StockWatcher implements EntryPoint {
     }
 
     private void refreshWatchList() {
-        if (stocks.size() == 0) {
-            return;
-        }
+		AsyncCallback<StockPrice[]> callback = new AsyncCallback<StockPrice[]>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+			}
 
-        String url = JSON_URL;
+			@Override
+			public void onSuccess(StockPrice[] result) {
+				updateTable(result);
+			}
+		};
 
-        Iterator<String> iter = stocks.iterator();
-        while (iter.hasNext()) {
-            url += iter.next();
-            if (iter.hasNext()) {
-                url += "+";
-            }
-        }
-        url = URL.encode(url);
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
-        try {
-            Request request = builder.sendRequest(null, new RequestCallback() {
-                @Override
-                public void onResponseReceived(Request request, Response response) {
-                    if (response.getStatusCode() == 200) {
-                        updateTable(JsonUtils.<JsArray<StockData>>safeEval(response.getText()));
-                    } else {
-                        displayError("Couldn't retrieve Json (" + response.getStatusText() + ")");
-                    }
-                }
-
-                @Override
-                public void onError(Request request, Throwable throwable) {
-                    displayError("Couldn't retriveve JSON");
-                }
-            });
-        } catch (RequestException e) {
-            displayError("Couldn't retrieve JSON");
-        }
+		stockPriceSvc.getPrices(stocks.toArray(new String[0]), callback);
     }
 
-    private void displayError(String error) {
-        errorMsgLabel.setText("Error: " + error);
-        errorMsgLabel.setVisible(true);
+    private void updateTable(StockPrice[] prices) {
+		for (int i = 0; i < prices.length; i++) {
+			updateTable(prices[i]);
+		}
+		// Display timestamp showing last refresh.
+		lastUpdatedLabel.setText("Last update : "
+				+ DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM)
+						.format(new Date()));
     }
 
-    private void updateTable(JsArray<StockData> prices) {
-        for (int i = 0; i < prices.length(); i++) {
-            updateTable(prices.get(i));
-        }
-
-        DateTimeFormat dateFormat = DateTimeFormat.getFormat(
-                DateTimeFormat.PredefinedFormat.DATE_TIME_MEDIUM);
-        lastUpdatedLabel.setText("Last update : "
-                                         + dateFormat.format(new Date()));
-
-        errorMsgLabel.setVisible(false);
-    }
-
-    private void updateTable(StockData price) {
+    private void updateTable(StockPrice price) {
         if (!stocks.contains(price.getSymbol())) {
             return;
         }

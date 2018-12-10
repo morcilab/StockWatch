@@ -7,14 +7,15 @@
 
   <!-- Servlets -->
   <servlet>
-    <servlet-name>jsonStockData</servlet-name>
-    <servlet-class>com.google.gwt.sample.stockwatcher.server.JsonStockData</servlet-class>
+    <servlet-name>stockPriceServiceImpl</servlet-name>
+    <servlet-class>com.google.gwt.sample.stockwatcher.server.StockPriceServiceImpl</servlet-class>
   </servlet>
-
+  
   <servlet-mapping>
-    <servlet-name>jsonStockData</servlet-name>
+    <servlet-name>stockPriceServiceImpl</servlet-name>
     <url-pattern>/stockwatcher/stockPrices</url-pattern>
   </servlet-mapping>
+  
   
   <!-- Default page to serve -->
   <welcome-file-list>
